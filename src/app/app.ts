@@ -3,7 +3,6 @@ import { RouterOutlet } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { addItem } from './state/item.actions';
 import { ItemState } from './state/item.reducer';
-import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -14,7 +13,6 @@ import { Observable } from 'rxjs';
 })
 export class App {
   protected readonly title = signal('angular-starter-project');
-  public items$: Observable<string[]>;
 
   constructor(private store: Store<ItemState>) {}
 
