@@ -1,5 +1,8 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { Store } from '@ngrx/store';
+import { addItem } from './state/item.actions';
+import { ItemState } from './state/item.reducer';
 
 @Component({
   selector: 'app-root',
@@ -10,4 +13,10 @@ import { RouterOutlet } from '@angular/router';
 })
 export class App {
   protected readonly title = signal('angular-starter-project');
+
+  constructor(private store: Store<ItemState>) {}
+
+  public addItem() {
+    this.store.dispatch(addItem({ item: 'Your new item' }));
+  }
 }
