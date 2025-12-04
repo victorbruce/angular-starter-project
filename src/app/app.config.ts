@@ -1,11 +1,12 @@
 import {
   ApplicationConfig,
-  importProvidersFrom,
+  isDevMode,
   provideBrowserGlobalErrorListeners,
   provideZoneChangeDetection,
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { StoreModule } from '@ngrx/store';
+import { provideStore } from '@ngrx/store';
+import { provideStoreDevtools } from '@ngrx/store-devtools';
 import { itemReducer } from './state/item.reducer';
 
 import { routes } from './app.routes';
@@ -15,6 +16,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    importProvidersFrom(StoreModule.forRoot({ items: itemReducer })),
+    provideStore({ items: itemReducer }),
+    provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
   ],
 };
