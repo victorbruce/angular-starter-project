@@ -7,10 +7,10 @@ on:
       - dev
       - main
     paths-ignore:
-      - "**/*.md"
-      - "docs/**"
-      - ".github/**"
-      - "!.github/workflows/**" # Still run if workflow files change
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/**'
+      - '!.github/workflows/**' # Still run if workflow files change
 
 # Cancel outdated runs to save CI minutes
 concurrency:
@@ -19,7 +19,7 @@ concurrency:
 
 # Environment variables for consistency
 env:
-  NODE_VERSION: "22"
+  NODE_VERSION: '22'
   CI: true
 
 jobs:
@@ -38,7 +38,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
@@ -65,7 +65,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
@@ -98,7 +98,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
