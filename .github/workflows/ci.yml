@@ -1,0 +1,154 @@
+name: CI Pipeline
+
+# Optimized for free tier: Only runs on PRs to dev/main
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - ".github/**"
+      - "!.github/workflows/**" # Still run if workflow files change
+
+# Cancel outdated runs to save CI minutes
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+# Environment variables for consistency
+env:
+  NODE_VERSION: "22"
+  CI: true
+
+jobs:
+  # ----------------------------------
+  # Job 1: Lint & Formatting
+  # ----------------------------------
+  lint:
+    name: Lint & Format Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Check Prettier formatting
+        run: npm run format:check
+
+  # ----------------------------------
+  # Job 2: Unit Tests
+  # ----------------------------------
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: lint # Only run if lint passes
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: npm test -- --coverage --watchAll=false
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+        continue-on-error: true
+
+  # ----------------------------------
+  # Job 3: Build Validation
+  # ----------------------------------
+  build:
+    name: Build Validation
+    runs-on: ubuntu-latest
+    needs: test # Only run if tests pass
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Build for dev branch (development config)
+      - name: Build for development
+        if: github.base_ref == 'dev'
+        run: npm run build -- --configuration development
+
+      # Build for main branch (production config)
+      - name: Build for production
+        if: github.base_ref == 'main'
+        run: npm run build -- --configuration production
+
+      - name: Verify build output
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "❌ Build failed: dist directory not found"
+            exit 1
+          fi
+
+          # Get build size
+          BUILD_SIZE=$(du -sh dist | cut -f1)
+          echo "✅ Build successful"
+          echo "📦 Build size: $BUILD_SIZE"
+
+      # Upload build artifacts (useful for debugging)
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        if: github.base_ref == 'main'
+        with:
+          name: production-build
+          path: dist/
+          retention-days: 7
+
+  # ----------------------------------
+  # Job 4: CI Summary
+  # ----------------------------------
+  ci-success:
+    name: CI Success
+    runs-on: ubuntu-latest
+    needs: [lint, test, build]
+    if: success()
+
+    steps:
+      - name: All checks passed
+        run: |
+          echo "🎉 All CI checks passed successfully!"
+          echo "✅ Linting: Passed"
+          echo "✅ Tests: Passed"
+          echo "✅ Build: Passed"
+          echo ""
+          echo "PR is ready for review! 🚀"
