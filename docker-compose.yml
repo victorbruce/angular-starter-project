@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  # Development service
+  angular-dev:
+    build:
+      context: .
+      target: development
+      dockerfile: Dockerfile
+    container_name: angular-starter-dev
+    ports:
+      - '4200:4200'
+    volumes:
+      # Mount source code for live reload
+      - .:/app
+      # Anonymous volume for node_modules (prevents overwriting from host)
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+    command: ng serve --host 0.0.0.0 --poll 2000
+    stdin_open: true
+    tty: true
+
+  # Production service (for testing production build)
+  angular-prod:
+    build:
+      context: .
+      target: production
+      dockerfile: Dockerfile
+    container_name: angular-starter-prod
+    ports:
+      - '8080:80'
+    environment:
+      - NODE_ENV=production
