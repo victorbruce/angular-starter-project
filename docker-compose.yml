@@ -9,7 +9,7 @@ services:
       dockerfile: Dockerfile
     container_name: angular-starter-dev
     ports:
-      - "4200:4200"
+      - '4200:4200'
     volumes:
       # Mount source code for live reload
       - .:/app
@@ -30,6 +30,6 @@ services:
       dockerfile: Dockerfile
     container_name: angular-starter-prod
     ports:
-      - "8080:80"
+      - '8080:80'
     environment:
       - NODE_ENV=production

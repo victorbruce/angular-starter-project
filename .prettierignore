@@ -2,3 +2,17 @@
 dist
 node_modules
 coverage
+.angular
+
+# Build outputs
+*.js.map
+*.d.ts
+*.min.js
+
+# Lock files
+package-lock.json
+yarn.lock
+
+# IDE
+.idea
+.vscode

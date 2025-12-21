@@ -7,10 +7,10 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "prepare": "husky",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "lint": "eslint \"src/**/*.{ts,js,html}\"",
+    "lint:fix": "eslint \"src/**/*.{ts,js,html}\" --fix",
+    "format": "prettier --write \"**/*.{ts,html,scss,css,json,md,yml,yaml}\" --ignore-path .prettierignore",
+    "format:check": "prettier --check \"**/*.{ts,html,scss,css,json,md,yml,yaml}\" --ignore-path .prettierignore",
     "test": "jest",
     "test:watchAll": "jest --watchAll",
     "test:watch": "jest --watch",
@@ -68,6 +68,6 @@
       "eslint --fix",
       "prettier --write"
     ],
-    "*.{scss,css,md,html,json}": "prettier --write"
+    "*.{scss,css,md,html,json,yml,yaml}": "prettier --write"
   }
 }
