@@ -2,9 +2,9 @@ name: Deploy to Render
 
 # Only deploy on push to main branch
 on:
-  # push:
-  #   branches:
-  #     - main
+  push:
+    branches:
+      - main
   workflow_dispatch: # Allow manual deployment
 
 concurrency:
@@ -68,6 +68,7 @@ jobs:
     name: Deploy to Render
     runs-on: ubuntu-latest
     needs: build
+    if: vars.RENDER_CONFIGURED == 'true'
     environment:
       name: production
       url: ${{ steps.deploy.outputs.url }}
@@ -82,7 +83,7 @@ jobs:
           RESPONSE=$(curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}")
 
           echo "✅ Deployment triggered successfully"
-          echo "url=https://your-app.onrender.com" >> $GITHUB_OUTPUT
+          echo "url=https://angular-starter-project.onrender.com" >> $GITHUB_OUTPUT
 
       - name: Wait for deployment
         run: |
@@ -98,7 +99,7 @@ jobs:
           sleep 30
 
           # Check if the app is accessible (update URL after Render setup)
-          # HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://your-app.onrender.com)
+          # HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://angular-starter-project.onrender.com)
 
           # if [ "$HTTP_CODE" = "200" ]; then
           #   echo "✅ Deployment verified successfully!"
@@ -130,7 +131,7 @@ jobs:
         run: |
           echo "🏥 Running health checks..."
           # Add your health check endpoint here
-          # curl -f https://your-app.onrender.com/health || exit 1
+          # curl -f https://angular-starter-project.onrender.com/health || exit 1
           echo "✅ Health check passed"
 
       - name: Deployment summary
@@ -143,4 +144,4 @@ jobs:
           echo "Branch: main"
           echo "Commit: ${{ github.sha }}"
           echo ""
-          echo "🔗 Access your app at: https://your-app.onrender.com"
+          echo "🔗 Access your app at: https://angular-starter-project.onrender.com"
