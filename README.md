@@ -5,8 +5,9 @@ A comprehensive, production-ready Angular 20 starter project with Docker support
 [![Angular](https://img.shields.io/badge/Angular-20-red.svg)](https://angular.io/) [![Node](https://img.shields.io/badge/Node-22-green.svg)](https://nodejs.org/) [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/) [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://claude.ai/chat/LICENSE)
 [![CI Pipeline](https://github.com/victorbruce/angular-starter-project/actions/workflows/ci.yml/badge.svg)](https://github.com/victorbruce/angular-starter-project/actions/workflows/ci.yml)
 [![PR Checks](https://github.com/victorbruce/angular-starter-project/actions/workflows/pr-checks.yml/badge.svg)](https://github.com/victorbruce/angular-starter-project/actions/workflows/pr-checks.yml)
+[![Deploy](https://github.com/victorbruce/angular-starter-project/actions/workflows/deploy-render.yml/badge.svg)](https://github.com/victorbruce/angular-starter-project/actions/workflows/deploy-render.yml)
 
-Live URL: [link](some url)
+Live Demo: [View Application](https://angular-starter-project.onrender.com)
 
 ---
 
