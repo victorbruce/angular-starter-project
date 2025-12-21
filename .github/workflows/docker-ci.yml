@@ -1,0 +1,214 @@
+name: Docker CI
+
+# Run on PRs and pushes to main
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+  push:
+    branches:
+      - main
+
+# Cancel outdated runs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ----------------------------------
+  # Job 1: Build Docker Image
+  # ----------------------------------
+  docker-build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      # Build development image (for PRs and testing)
+      - name: Build development Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: development
+          push: false
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_ENV=development
+
+      # Build production image (for main branch)
+      - name: Build and push production Docker image
+        if: github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: production
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_ENV=production
+
+  # ----------------------------------
+  # Job 2: Test Docker Container
+  # ----------------------------------
+  docker-test:
+    name: Test Docker Container
+    runs-on: ubuntu-latest
+    needs: docker-build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build development image for testing
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: development
+          load: true
+          tags: test-image:latest
+          cache-from: type=gha
+
+      - name: Test container starts successfully
+        run: |
+          # Start container in background
+          docker run -d --name test-container -p 4200:4200 test-image:latest
+
+          # Wait for container to be healthy
+          echo "Waiting for container to start..."
+          sleep 10
+
+          # Check if container is running
+          if [ "$(docker ps -q -f name=test-container)" ]; then
+            echo "✅ Container started successfully"
+          else
+            echo "❌ Container failed to start"
+            docker logs test-container
+            exit 1
+          fi
+
+          # Stop container
+          docker stop test-container
+          docker rm test-container
+
+      - name: Test production build
+        run: |
+          # Build production image
+          docker build --target production -t prod-test:latest .
+
+          # Start production container
+          docker run -d --name prod-container -p 8080:80 prod-test:latest
+
+          # Wait for Nginx to start
+          sleep 5
+
+          # Check if container is running
+          if [ "$(docker ps -q -f name=prod-container)" ]; then
+            echo "✅ Production container started successfully"
+          else
+            echo "❌ Production container failed to start"
+            docker logs prod-container
+            exit 1
+          fi
+
+          # Check if Nginx is serving content
+          HTTP_CODE=$(docker exec prod-container wget -q --spider -S http://localhost 2>&1 | grep "HTTP/" | awk '{print $2}')
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Nginx serving content successfully"
+          else
+            echo "❌ Nginx not responding correctly (HTTP $HTTP_CODE)"
+            exit 1
+          fi
+
+          # Cleanup
+          docker stop prod-container
+          docker rm prod-container
+
+  # ----------------------------------
+  # Job 3: Security Scan
+  # ----------------------------------
+  docker-security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: docker-build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build image for scanning
+        run: docker build --target production -t security-scan:latest .
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: security-scan:latest
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+        continue-on-error: true
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+        continue-on-error: true
+
+  # ----------------------------------
+  # Job 4: Docker CI Success
+  # ----------------------------------
+  docker-ci-success:
+    name: Docker CI Success
+    runs-on: ubuntu-latest
+    needs: [docker-build, docker-test, docker-security]
+    if: success()
+
+    steps:
+      - name: All Docker checks passed
+        run: |
+          echo "🎉 All Docker CI checks passed!"
+          echo "✅ Docker build successful"
+          echo "✅ Container tests passed"
+          echo "✅ Security scan completed"
