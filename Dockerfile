@@ -43,11 +43,11 @@ FROM base AS build
 COPY package*.json ./
 
 # Install only production dependencies first (for layer caching)
-RUN npm ci --only=production && \
+RUN npm ci --omit=dev --ignore-scripts && \
     cp -R node_modules /tmp/node_modules
 
 # Install all dependencies for build
-RUN npm ci
+RUN npm ci --ignore-scripts
 
 # Copy source code
 COPY . .
