@@ -2,9 +2,9 @@ name: Deploy to Render
 
 # Only deploy on push to main branch
 on:
-  push:
-    branches:
-      - main
+  # push:
+  #   branches:
+  #     - main
   workflow_dispatch: # Allow manual deployment
 
 concurrency:
