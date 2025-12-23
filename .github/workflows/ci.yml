@@ -104,7 +104,6 @@ jobs:
 
       # Always build for production config for PRs to main
       - name: Build for production
-        if: github.base_ref == 'dev'
         run: npm run build -- --configuration production
 
       - name: Verify build output
