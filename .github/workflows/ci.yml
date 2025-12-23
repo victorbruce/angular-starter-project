@@ -4,7 +4,6 @@ name: CI Pipeline
 on:
   pull_request:
     branches:
-      - dev
       - main
     paths-ignore:
       - '**/*.md'
@@ -103,14 +102,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Build for dev branch (development config)
-      - name: Build for development
-        if: github.base_ref == 'dev'
-        run: npm run build -- --configuration development
-
-      # Build for main branch (production config)
+      # Always build for production config for PRs to main
       - name: Build for production
-        if: github.base_ref == 'main'
         run: npm run build -- --configuration production
 
       - name: Verify build output
