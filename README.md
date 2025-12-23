@@ -24,6 +24,7 @@ Live Demo: [View Application](https://angular-starter-project.onrender.com)
 - [🚀 Deployment](#-deployment)
 - [🤝 Team Onboarding](#-team-onboarding)
 - [👤 Author](#-author)
+- [📦 Releases & Versioning](#releases-&-versioning)
 
 ---
 
@@ -546,6 +547,102 @@ MIT License - feel free to use this for personal or commercial projects!
 - Project: [Angular Starter Project](https://github.com/victorbruce/angular-starter-project)
 
 ---
+
+## 📦 Releases & Versioning
+
+This project uses [Semantic Versioning](https://semver.org/) and automated releases with [standard-version](https://github.com/conventional-changelog/standard-version).
+
+### Branching Strategy
+
+**Simple Git Flow:**
+
+```
+main (protected, production releases)
+  ↓
+feature branches (development work)
+```
+
+**Workflow:**
+
+1. Create feature branch from `main`
+2. Develop and commit using [Conventional Commits](https://www.conventionalcommits.org/)
+3. Create PR to `main`
+4. After merge, automated release via standard-version
+
+### Version Format
+
+- **MAJOR** (v2.0.0): Breaking changes
+- **MINOR** (v1.1.0): New features (backward compatible)
+- **PATCH** (v1.0.1): Bug fixes
+
+### Release Process
+
+```bash
+# After merging PR to main
+git checkout main
+git pull origin main
+
+# Automatic version bump based on conventional commits
+npm run release
+
+# Or specify version type explicitly
+npm run release:minor  # New feature
+npm run release:major  # Breaking change
+npm run release:patch  # Bug fix
+
+# Push release with tags
+git push --follow-tags origin main
+```
+
+### Conventional Commits
+
+We use [Conventional Commits](https://www.conventionalcommits.org/) for automatic versioning:
+
+```bash
+feat: new feature        → MINOR version bump (1.0.0 → 1.1.0)
+fix: bug fix             → PATCH version bump (1.0.0 → 1.0.1)
+feat!: breaking change   → MAJOR version bump (1.0.0 → 2.0.0)
+
+# Examples:
+feat: add Angular Material
+fix: resolve Docker build issue
+feat!: upgrade to Angular 21
+
+BREAKING CHANGE: Requires Node.js 22+
+```
+
+### Changelog
+
+All releases are documented in [CHANGELOG.md](CHANGELOG.md) with:
+
+- Version number and date
+- Features, fixes, and changes grouped by type
+- Links to commits and version comparisons
+- Automatically generated from commit messages
+
+### Creating a New Feature
+
+```bash
+# Start from main
+git checkout main
+git pull origin main
+
+# Create feature branch
+git checkout -b feat/my-new-feature
+
+# Make changes and commit
+git add .
+git commit -m "feat: add my new feature"
+
+# Push and create PR
+git push origin feat/my-new-feature
+
+# After PR approved and merged:
+# - Maintainer runs npm run release on main
+# - Version automatically bumped
+# - CHANGELOG automatically updated
+# - Git tag automatically created
+```
 
 ## 🌟 Contributing
 
