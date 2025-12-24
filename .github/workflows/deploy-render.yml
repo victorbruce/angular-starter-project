@@ -3,8 +3,8 @@ name: Deploy to Render
 # Only deploy on push to main branch
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'v*'
   workflow_dispatch: # Allow manual deployment
 
 concurrency:
@@ -46,7 +46,9 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=sha,prefix=prod-
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
             type=raw,value=latest
 
       - name: Build and push production image
@@ -74,20 +76,31 @@ jobs:
       url: ${{ steps.deploy.outputs.url }}
 
     steps:
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
       - name: Trigger Render deployment
         id: deploy
         run: |
-          echo "🚀 Triggering Render deployment..."
+          echo "🚀 Deploying version ${{ steps.version.outputs.version }} to Render..."
 
           # Trigger Render deploy hook
-          RESPONSE=$(curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}")
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
 
-          echo "✅ Deployment triggered successfully"
-          echo "url=https://angular-starter-project.onrender.com" >> $GITHUB_OUTPUT
+          if [ "$HTTP_CODE" -eq 200 ] || [ "$HTTP_CODE" -eq 201 ]; then
+            echo "✅ Deployment triggered successfully"
+          else
+            echo "❌ Deployment trigger failed with HTTP $HTTP_CODE"
+            exit 1
+          fi
 
       - name: Wait for deployment
         run: |
           echo "⏳ Waiting for deployment to complete..."
+          echo "Version: ${{ steps.version.outputs.version }}"
           echo "Check status at: https://dashboard.render.com"
           sleep 10
 
@@ -95,53 +108,85 @@ jobs:
         run: |
           echo "🔍 Verifying deployment..."
 
-          # Wait a bit for the deployment to be live
+          # Wait a bit more for deployment to be fully live
           sleep 30
 
-          # Check if the app is accessible (update URL after Render setup)
-          # HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://angular-starter-project.onrender.com)
+          # Check if the app is accessible
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://angular-starter-project.onrender.com)
 
-          # if [ "$HTTP_CODE" = "200" ]; then
-          #   echo "✅ Deployment verified successfully!"
-          # else
-          #   echo "⚠️  App returned HTTP $HTTP_CODE"
-          #   echo "Check Render dashboard for details"
-          # fi
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Deployment verified! App is live."
+          else
+            echo "⚠️  App returned HTTP $HTTP_CODE"
+            echo "Check Render dashboard for details"
+          fi
 
-      - name: Notify deployment status
+      - name: Deployment summary
         if: always()
         run: |
           if [ "${{ job.status }}" = "success" ]; then
-            echo "🎉 Deployment to Render completed successfully!"
+            echo "🎉 Deployment completed successfully!"
+            echo ""
+            echo "📊 Deployment Details:"
+            echo "  Version: ${{ steps.version.outputs.version }}"
+            echo "  Environment: Production"
+            echo "  Platform: Render"
+            echo "  Status: Live ✅"
+            echo ""
+            echo "🔗 Access your app:"
+            echo "  https://angular-starter-project.onrender.com"
           else
-            echo "❌ Deployment failed. Check Render logs."
+            echo "❌ Deployment failed"
+            echo "Check Render logs for details"
           fi
 
   # ----------------------------------
-  # Job 3: Post-Deploy Checks
+  # Job 3: Create GitHub Release
   # ----------------------------------
-  post-deploy:
-    name: Post-Deploy Checks
+  github-release:
+    name: Create GitHub Release
     runs-on: ubuntu-latest
     needs: deploy
     if: success()
+    permissions:
+      contents: write
 
     steps:
-      - name: Health check
-        run: |
-          echo "🏥 Running health checks..."
-          # Add your health check endpoint here
-          # curl -f https://angular-starter-project.onrender.com/health || exit 1
-          echo "✅ Health check passed"
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Deployment summary
+      - name: Extract version
+        id: version
         run: |
-          echo "📊 Deployment Summary"
-          echo "===================="
-          echo "Environment: Production"
-          echo "Platform: Render"
-          echo "Status: Deployed ✅"
-          echo "Branch: main"
-          echo "Commit: ${{ github.sha }}"
-          echo ""
-          echo "🔗 Access your app at: https://angular-starter-project.onrender.com"
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Extract changelog for this version
+        id: changelog
+        run: |
+          # Get changelog section for this version
+          VERSION=${{ steps.version.outputs.version }}
+
+          # Extract changelog between version headers
+          CHANGELOG=$(sed -n "/## \[$VERSION\]/,/## \[/p" CHANGELOG.md | sed '$d')
+
+          # If changelog is empty, use generic message
+          if [ -z "$CHANGELOG" ]; then
+            CHANGELOG="See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details."
+          fi
+
+          # Save to file (GitHub Actions multiline output)
+          echo "$CHANGELOG" > release_notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ steps.version.outputs.version }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
