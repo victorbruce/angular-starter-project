@@ -1,0 +1,23 @@
+@use '@angular/material' as mat;
+@use './material_theme-colors' as my-colors;
+
+@include mat.core();
+
+$my-theme: mat.define-theme(
+  (
+    color: (
+      theme-type: dark,
+      primary: my-colors.$primary-palette,
+      tertiary: my-colors.$tertiary-palette,
+    ),
+    typography: (
+      brand-family: 'Roboto, sans-serif',
+      plain-family: 'Roboto, sans-serif',
+    ),
+    density: (
+      scale: 0,
+    ),
+  )
+);
+
+@include mat.all-component-themes($my-theme);
