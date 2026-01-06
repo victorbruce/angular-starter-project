@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.1.0](https://github.com/victorbruce/angular-starter-project/compare/v1.0.3...v1.1.0) (2026-01-06)
+
+### ✨ Features
+
+- add Angular Material with custom theming ([bc69489](https://github.com/victorbruce/angular-starter-project/commit/bc69489d99fd7e2311dd8c6cc539a6c6dc4eb7c6)), closes [#F0B90](https://github.com/victorbruce/angular-starter-project/issues/F0B90) [#0ECB81](https://github.com/victorbruce/angular-starter-project/issues/0ECB81) [#F6465](https://github.com/victorbruce/angular-starter-project/issues/F6465)
+
 ### [1.0.3](https://github.com/victorbruce/angular-starter-project/compare/v1.0.2...v1.0.3) (2025-12-24)
 
 ### 🔧 Chores
