@@ -163,22 +163,58 @@ jobs:
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Extract changelog for this version
-        id: changelog
+      - name: Generate release notes
+        id: release_notes
         run: |
-          # Get changelog section for this version
           VERSION=${{ steps.version.outputs.version }}
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
 
-          # Extract changelog between version headers
-          CHANGELOG=$(sed -n "/## \[$VERSION\]/,/## \[/p" CHANGELOG.md | sed '$d')
+          # Extract changelog for this version
+          CHANGELOG=$(sed -n "/## \[$VERSION\]/,/## \[/p" CHANGELOG.md | sed '$d' | tail -n +2)
 
-          # If changelog is empty, use generic message
+          # If changelog is empty, use commit messages
           if [ -z "$CHANGELOG" ]; then
-            CHANGELOG="See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details."
+            if [ -n "$PREV_TAG" ]; then
+              CHANGELOG=$(git log $PREV_TAG..HEAD --pretty=format:"* %s" --no-merges)
+            else
+              CHANGELOG=$(git log HEAD --pretty=format:"* %s" --no-merges | head -10)
+            fi
           fi
 
-          # Save to file (GitHub Actions multiline output)
-          echo "$CHANGELOG" > release_notes.md
+          # Build release notes
+          cat > release_notes.md << EOF
+          ## 🚀 What's New
+
+          $CHANGELOG
+
+          ## 📦 Quick Start
+
+          ### Using as Template
+          \`\`\`bash
+          npx degit victorbruce/angular-starter-project my-project
+          cd my-project
+          ./setup.sh my-project
+          docker-compose up
+          \`\`\`
+
+          ### Clone Repository
+          \`\`\`bash
+          git clone https://github.com/victorbruce/angular-starter-project.git
+          cd angular-starter-project
+          docker-compose up
+          \`\`\`
+
+          ## 🔗 Resources
+
+          - 🌐 **Live Demo**: https://angular-starter-project.onrender.com
+          - 📚 **Documentation**: [README.md](https://github.com/${{ github.repository }}#readme)
+          - 📝 **Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREV_TAG}...v${VERSION}
+          - 🐛 **Report Issues**: [GitHub Issues](https://github.com/${{ github.repository }}/issues)
+
+          ---
+
+          **Docker Image**: \`ghcr.io/${{ github.repository }}:${VERSION}\`
+          EOF
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
