@@ -1,0 +1,19 @@
+:root {
+  /* --- PRIMARY (Your Main Brand Color) --- */
+  --mat-sys-primary: #f0b90b; /* Your EXACT Primary Hex */
+  --mat-sys-on-primary: #000; /* Text color on top of Primary */
+
+  /* --- SECONDARY (Formerly 'Accent') --- */
+  /* Used for Floating Action Buttons (FABs), selection controls, chips */
+  --mat-sys-secondary: #00cc99; /* Your EXACT Secondary Hex */
+  --mat-sys-on-secondary: #000000;
+
+  /* --- TERTIARY (New in M3) --- */
+  /* Used for contrasting accents or distinctive visual elements */
+  --mat-sys-tertiary: #ffcc00; /* Your EXACT Tertiary Hex */
+  --mat-sys-on-tertiary: #000000;
+
+  /* --- ERROR (Formerly 'Warn') --- */
+  --mat-sys-error: #ff0000; /* Your EXACT Error/Warn Hex */
+  --mat-sys-on-error: #ffffff;
+}
