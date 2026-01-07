@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.1](https://github.com/victorbruce/angular-starter-project/compare/v1.1.0...v1.1.1) (2026-01-07)
+
+### 👷 CI/CD
+
+- **release:** generate enhanced GitHub release notes ([f283255](https://github.com/victorbruce/angular-starter-project/commit/f283255a1d2267f07e5e4d98c86cdabc957dd6f2))
+
 ## [1.1.0](https://github.com/victorbruce/angular-starter-project/compare/v1.0.3...v1.1.0) (2026-01-06)
 
 ### ✨ Features
